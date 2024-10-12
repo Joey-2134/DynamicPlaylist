@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,6 +29,9 @@ public class User {
     private long expiresIn; // The time period (in seconds) for which the access token is valid.
     private int skipThreshold;
     private int cooldownDays;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) //each user can have multiple playlists
+    private List<Playlist> playlists = new ArrayList<>();
 
     public User(String id, String username, int skipThreshold, int cooldownDays) {
         super();
