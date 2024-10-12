@@ -24,4 +24,11 @@ public class Song {
 
     @ManyToMany(mappedBy = "songs")
     private List<Playlist> playlists = new ArrayList<>(); //each song can be in multiple playlists
+
+    public Song(String id, String name, String artist) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.artist = artist;
+    }
 }

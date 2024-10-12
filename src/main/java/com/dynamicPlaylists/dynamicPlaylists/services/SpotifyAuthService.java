@@ -33,7 +33,7 @@ public class SpotifyAuthService {
 
     public String getLoginUrl() {
         String redirectUri = "http://localhost:8080/callback";
-        String scope = "user-read-playback-state user-modify-playback-state";
+        String scope = "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private";
         String responseType = "code";
 
         return String.format(
@@ -95,7 +95,9 @@ public class SpotifyAuthService {
         String scope = jsonResponse.getString("scope");
         int expiresIn = jsonResponse.getInt("expires_in");
 
-        JSONObject spotifyUserData = spotifyDataService.fetchSpotifyInfo(accessToken);
+        JSONObject spotifyUserData = spotifyDataService.fetchSpotifyUserInfo(accessToken);
+        //System.out.println("Spotify User Info Response: " + spotifyUserData.toString());
+
         String userId = spotifyUserData.getString("id");
         String username = spotifyUserData.getString("display_name");
 

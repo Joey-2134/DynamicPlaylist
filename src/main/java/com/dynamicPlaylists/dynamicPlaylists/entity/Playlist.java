@@ -18,11 +18,11 @@ public class Playlist {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id") //each playlist belongs to a user
     private User user;
 
-    @ManyToMany
-    @JoinTable(
+    @ManyToMany //each playlist can have multiple songs
+    @JoinTable( //join table for playlist and songs
             name = "playlist_songs",
             joinColumns = @JoinColumn(name = "playlist_id"),
             inverseJoinColumns = @JoinColumn(name = "song_id")
