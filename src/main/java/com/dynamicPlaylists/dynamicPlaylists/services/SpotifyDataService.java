@@ -70,26 +70,28 @@ public class SpotifyDataService {
     }
 
     //fetch all songs in a playlist
-    public List<JSONObject> fetchSpotifyPlaylistSongs(String accessToken, String playlistId) throws IOException {
+    public List<JSONObject> fetchSpotifyPlaylistSongs(String accessToken, String playlistId, int limit, int offset) throws IOException {
         List<JSONObject> playlistSongs = new ArrayList<>();
-        URL url = new URL("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks");
-        System.out.println("URL: " + url);
+        String urlString = "https://api.spotify.com/v1/playlists/" + playlistId + "/tracks?limit=" + limit + "&offset=" + offset;
+        URL url = new URL(urlString);
+        System.out.println("Fetching from URL: " + url);
+
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
         con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
         int responseCode = con.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
-
             JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
+            System.out.println("Songs: " + response.toString(2));
+
             for (int i = 0; i < response.getJSONArray("items").length(); i++) {
                 JSONObject song = response.getJSONArray("items").getJSONObject(i).getJSONObject("track");
                 playlistSongs.add(song);
             }
-            return playlistSongs;
-
         } else {
             throw new RuntimeException("Failed : HTTP error code : " + responseCode);
         }
+        return playlistSongs;
     }
 }

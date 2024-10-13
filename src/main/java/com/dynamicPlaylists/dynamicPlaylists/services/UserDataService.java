@@ -50,23 +50,36 @@ public class UserDataService {
     }
 
     private void savePlaylistSongs(Playlist playlist, String accessToken, String playlistId) throws IOException {
-        List<JSONObject> songs = spotifyDataService.fetchSpotifyPlaylistSongs(accessToken, playlistId);
-        //System.out.println("Songs: " + songs.toString());
-        for (JSONObject songJson : songs) {
-            Song song = songRepository.findById(songJson.getString("id"))
-                    .orElseGet(() -> new Song(
-                            songJson.getString("id"),
-                            songJson.getString("name"),
-                            songJson.getJSONArray("artists").getJSONObject(0).getString("name")));
+        int limit = 100; // Spotify allows up to 100 items per request
+        int offset = 0;
+        boolean hasMoreSongs = true;
 
-            System.out.println("Song: " + song.getName() + " by " + song.getArtist());
-            songRepository.save(song); // Save song if it's new
+        // Loop to fetch all songs in batches using offset
+        while (hasMoreSongs) {
+            List<JSONObject> songs = spotifyDataService.fetchSpotifyPlaylistSongs(accessToken, playlistId, limit, offset);
 
-//            // Create a PlaylistSong entry for the many-to-many relationship
-//            PlaylistSong playlistSong = new PlaylistSong();
-//            playlistSong.setPlaylist(playlist);
-//            playlistSong.setSong(song);
-//            playlistSongRepository.save(playlistSong); // Save playlist-song relationship
+            if (songs.isEmpty()) {
+                hasMoreSongs = false; // No more songs to fetch
+            } else {
+                for (JSONObject songJson : songs) {
+                    Song song = songRepository.findById(songJson.getString("id"))
+                            .orElseGet(() -> new Song(
+                                    songJson.getString("id"),
+                                    songJson.getString("name"),
+                                    songJson.getJSONArray("artists").getJSONObject(0).getString("name")));
+
+                    // Save the song (if new)
+                    songRepository.save(song);
+
+                    // Optional: Add PlaylistSong relationship logic back here if needed
+                    // PlaylistSong playlistSong = new PlaylistSong();
+                    // playlistSong.setPlaylist(playlist);
+                    // playlistSong.setSong(song);
+                    // playlistSongRepository.save(playlistSong); // Save playlist-song relationship
+                }
+                offset += limit; // Move to the next batch
+            }
         }
     }
+
 }
