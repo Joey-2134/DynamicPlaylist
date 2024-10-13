@@ -42,24 +42,21 @@ public class UserDataService {
             playlist.setName(playlistJson.getString("name"));
             playlist.setUser(user);
 
-            // Fetch and save the songs in the playlist
+            playlistRepository.save(playlist);
             savePlaylistSongs(playlist, accessToken, playlistJson.getString("id"));
-
-            playlistRepository.save(playlist); // Save playlist
         }
     }
 
     private void savePlaylistSongs(Playlist playlist, String accessToken, String playlistId) throws IOException {
-        int limit = 100; // Spotify allows up to 100 items per request
+        int limit = 100;
         int offset = 0;
         boolean hasMoreSongs = true;
 
-        // Loop to fetch all songs in batches using offset
         while (hasMoreSongs) {
             List<JSONObject> songs = spotifyDataService.fetchSpotifyPlaylistSongs(accessToken, playlistId, limit, offset);
 
             if (songs.isEmpty()) {
-                hasMoreSongs = false; // No more songs to fetch
+                hasMoreSongs = false;
             } else {
                 for (JSONObject songJson : songs) {
                     Song song = songRepository.findById(songJson.getString("id"))
@@ -68,16 +65,14 @@ public class UserDataService {
                                     songJson.getString("name"),
                                     songJson.getJSONArray("artists").getJSONObject(0).getString("name")));
 
-                    // Save the song (if new)
                     songRepository.save(song);
 
-                    // Optional: Add PlaylistSong relationship logic back here if needed
-                    // PlaylistSong playlistSong = new PlaylistSong();
-                    // playlistSong.setPlaylist(playlist);
-                    // playlistSong.setSong(song);
-                    // playlistSongRepository.save(playlistSong); // Save playlist-song relationship
+                     PlaylistSong playlistSong = new PlaylistSong();
+                     playlistSong.setPlaylist(playlist);
+                     playlistSong.setSong(song);
+                     playlistSongRepository.save(playlistSong);
                 }
-                offset += limit; // Move to the next batch
+                offset += limit;
             }
         }
     }
