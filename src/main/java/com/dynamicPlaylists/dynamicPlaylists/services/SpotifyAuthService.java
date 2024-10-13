@@ -3,7 +3,6 @@ package com.dynamicPlaylists.dynamicPlaylists.services;
 import com.dynamicPlaylists.dynamicPlaylists.entity.User;
 import com.dynamicPlaylists.dynamicPlaylists.repository.UserRepository;
 import com.dynamicPlaylists.dynamicPlaylists.util.AESUtil;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ public class SpotifyAuthService {
 
     public String getLoginUrl() {
         String redirectUri = "http://localhost:8080/callback";
-        String scope = "user-read-playback-state user-modify-playback-state";
+        String scope = "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private";
         String responseType = "code";
 
         return String.format(
@@ -61,7 +60,6 @@ public class SpotifyAuthService {
         return "Authentication successful!, you can now close this tab.";
     }
 
-    @NotNull
     private HttpURLConnection prepareGetAccessTokenRequest(String code) throws IOException {
         String redirectUri = "http://localhost:8080/callback";
         URL tokenUrl = new URL("https://accounts.spotify.com/api/token");
@@ -91,11 +89,14 @@ public class SpotifyAuthService {
         JSONObject jsonResponse = new JSONObject(response);
 
         String accessToken = jsonResponse.getString("access_token");
+        //System.out.println("Logging in... Access Token: " + accessToken);
         String refreshToken = jsonResponse.getString("refresh_token");
         String scope = jsonResponse.getString("scope");
         int expiresIn = jsonResponse.getInt("expires_in");
 
-        JSONObject spotifyUserData = spotifyDataService.fetchSpotifyInfo(accessToken);
+        JSONObject spotifyUserData = spotifyDataService.fetchSpotifyUserInfo(accessToken);
+        //System.out.println("Spotify User Info Response: " + spotifyUserData.toString());
+
         String userId = spotifyUserData.getString("id");
         String username = spotifyUserData.getString("display_name");
 
@@ -112,6 +113,7 @@ public class SpotifyAuthService {
 
         // Save the user back to the database
         userRepository.save(user);
+        //.out.println("User saved to database: " + user.toString());
     }
 
     public void refreshAccessToken(User user) {
@@ -140,7 +142,6 @@ public class SpotifyAuthService {
         }
     } //todo not tested working
 
-    @NotNull
     private HttpURLConnection prepareRefreshAccessTokenRequest(String refreshToken) throws IOException {
         URL tokenUrl = new URL("https://accounts.spotify.com/api/token");
         HttpURLConnection con = (HttpURLConnection) tokenUrl.openConnection();

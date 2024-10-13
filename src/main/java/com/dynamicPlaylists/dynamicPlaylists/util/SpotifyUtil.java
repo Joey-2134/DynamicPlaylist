@@ -2,7 +2,9 @@ package com.dynamicPlaylists.dynamicPlaylists.util;
 
 import com.dynamicPlaylists.dynamicPlaylists.entity.User;
 import com.dynamicPlaylists.dynamicPlaylists.services.SpotifyAuthService;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SpotifyUtil {
 
     private final SpotifyAuthService spotifyAuthService;
@@ -23,7 +25,8 @@ public class SpotifyUtil {
             System.out.println("Access token is about to expire, refreshing...");
             spotifyAuthService.refreshAccessToken(user);  // Refresh the access token
         }
-
+        System.out.println("TOKEN CHECKED");
+        //System.out.println("Access token: " + AESUtil.decrypt(user.getAccessToken()));
         // Return the (possibly refreshed) access token
         return AESUtil.decrypt(user.getAccessToken());
     }

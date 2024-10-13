@@ -20,8 +20,15 @@ public class Song {
     private String id;
 
     private String name;
-    private String artist;
+    private String artist; //todo potentially make this a list of artist or list of artist entities
 
     @ManyToMany(mappedBy = "songs")
-    private List<Playlist> playlists = new ArrayList<>(); //each song can be in multiple playlists
+    private List<Playlist> playlists = new ArrayList<>();
+
+    public Song(String id, String name, String artist) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.artist = artist;
+    }
 }
