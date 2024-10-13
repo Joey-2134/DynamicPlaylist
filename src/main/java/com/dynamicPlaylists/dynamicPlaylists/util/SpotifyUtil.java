@@ -25,7 +25,8 @@ public class SpotifyUtil {
             System.out.println("Access token is about to expire, refreshing...");
             spotifyAuthService.refreshAccessToken(user);  // Refresh the access token
         }
-        System.out.println("test");
+        System.out.println("TOKEN CHECKED");
+        //System.out.println("Access token: " + AESUtil.decrypt(user.getAccessToken()));
         // Return the (possibly refreshed) access token
         return AESUtil.decrypt(user.getAccessToken());
     }

@@ -17,7 +17,7 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/api/login-url", "/callback").permitAll()  // Allow access to login and callback
+                        .requestMatchers("/api/login-url", "/callback", "/save-user-playlists").permitAll()  // Allow access to login and callback
                         .anyRequest().authenticated()  // Protect other endpoints
                 )
                 .requestCache((cache) -> cache

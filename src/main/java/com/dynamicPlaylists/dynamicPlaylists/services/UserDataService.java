@@ -43,7 +43,7 @@ public class UserDataService {
             playlist.setUser(user);
 
             // Fetch and save the songs in the playlist
-            savePlaylistSongs(playlist, playlistJson.getString("id"), accessToken);
+            savePlaylistSongs(playlist, accessToken, playlistJson.getString("id"));
 
             playlistRepository.save(playlist); // Save playlist
         }
@@ -51,21 +51,22 @@ public class UserDataService {
 
     private void savePlaylistSongs(Playlist playlist, String accessToken, String playlistId) throws IOException {
         List<JSONObject> songs = spotifyDataService.fetchSpotifyPlaylistSongs(accessToken, playlistId);
-
+        //System.out.println("Songs: " + songs.toString());
         for (JSONObject songJson : songs) {
             Song song = songRepository.findById(songJson.getString("id"))
                     .orElseGet(() -> new Song(
                             songJson.getString("id"),
                             songJson.getString("name"),
-                            songJson.getString("artist")));
+                            songJson.getJSONArray("artists").getJSONObject(0).getString("name")));
 
+            System.out.println("Song: " + song.getName() + " by " + song.getArtist());
             songRepository.save(song); // Save song if it's new
 
-            // Create a PlaylistSong entry for the many-to-many relationship
-            PlaylistSong playlistSong = new PlaylistSong();
-            playlistSong.setPlaylist(playlist);
-            playlistSong.setSong(song);
-            playlistSongRepository.save(playlistSong); // Save playlist-song relationship
+//            // Create a PlaylistSong entry for the many-to-many relationship
+//            PlaylistSong playlistSong = new PlaylistSong();
+//            playlistSong.setPlaylist(playlist);
+//            playlistSong.setSong(song);
+//            playlistSongRepository.save(playlistSong); // Save playlist-song relationship
         }
     }
 }

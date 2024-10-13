@@ -3,7 +3,6 @@ package com.dynamicPlaylists.dynamicPlaylists.services;
 import com.dynamicPlaylists.dynamicPlaylists.entity.User;
 import com.dynamicPlaylists.dynamicPlaylists.repository.UserRepository;
 import com.dynamicPlaylists.dynamicPlaylists.util.AESUtil;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -61,7 +60,6 @@ public class SpotifyAuthService {
         return "Authentication successful!, you can now close this tab.";
     }
 
-    @NotNull
     private HttpURLConnection prepareGetAccessTokenRequest(String code) throws IOException {
         String redirectUri = "http://localhost:8080/callback";
         URL tokenUrl = new URL("https://accounts.spotify.com/api/token");
@@ -91,6 +89,7 @@ public class SpotifyAuthService {
         JSONObject jsonResponse = new JSONObject(response);
 
         String accessToken = jsonResponse.getString("access_token");
+        //System.out.println("Logging in... Access Token: " + accessToken);
         String refreshToken = jsonResponse.getString("refresh_token");
         String scope = jsonResponse.getString("scope");
         int expiresIn = jsonResponse.getInt("expires_in");
@@ -114,6 +113,7 @@ public class SpotifyAuthService {
 
         // Save the user back to the database
         userRepository.save(user);
+        //.out.println("User saved to database: " + user.toString());
     }
 
     public void refreshAccessToken(User user) {
@@ -142,7 +142,6 @@ public class SpotifyAuthService {
         }
     } //todo not tested working
 
-    @NotNull
     private HttpURLConnection prepareRefreshAccessTokenRequest(String refreshToken) throws IOException {
         URL tokenUrl = new URL("https://accounts.spotify.com/api/token");
         HttpURLConnection con = (HttpURLConnection) tokenUrl.openConnection();

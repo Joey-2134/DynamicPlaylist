@@ -43,6 +43,7 @@ public class SpotifyDataService {
 
     //fetch all playlists of the user and only save the playlists that are owned by the user
     public List<JSONObject> fetchSpotifyPlaylists(String accessToken, String userId) throws IOException {
+
         List<JSONObject> userPlaylists = new ArrayList<>();
         URL url = new URL("https://api.spotify.com/v1/me/playlists");
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -51,14 +52,18 @@ public class SpotifyDataService {
 
         int responseCode = con.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            JSONObject playlists = new JSONObject(DataUtil.parseHTTPResponse(con));
-            for (int i = 0; i < playlists.getJSONArray("items").length(); i++) {
-                JSONObject playlist = playlists.getJSONArray("items").getJSONObject(i);
+            JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
+//            System.out.println("Playlists: " + response.toString(2));
+//            System.out.println("Type of playlists: " + response.getClass());
+
+            for (int i = 0; i < response.getJSONArray("items").length(); i++) {
+                JSONObject playlist = response.getJSONArray("items").getJSONObject(i);
                 if (playlist.getJSONObject("owner").getString("id").equals(userId)) {
                     userPlaylists.add(playlist);
                 }
             }
             return userPlaylists;
+
         } else {
             throw new RuntimeException("Failed : HTTP error code : " + responseCode);
         }
@@ -68,18 +73,21 @@ public class SpotifyDataService {
     public List<JSONObject> fetchSpotifyPlaylistSongs(String accessToken, String playlistId) throws IOException {
         List<JSONObject> playlistSongs = new ArrayList<>();
         URL url = new URL("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks");
+        System.out.println("URL: " + url);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
         con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
         int responseCode = con.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            JSONObject songs = new JSONObject(DataUtil.parseHTTPResponse(con));
-            for (int i = 0; i < songs.getJSONArray("items").length(); i++) {
-                JSONObject song = songs.getJSONArray("items").getJSONObject(i).getJSONObject("track");
+
+            JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
+            for (int i = 0; i < response.getJSONArray("items").length(); i++) {
+                JSONObject song = response.getJSONArray("items").getJSONObject(i).getJSONObject("track");
                 playlistSongs.add(song);
             }
             return playlistSongs;
+
         } else {
             throw new RuntimeException("Failed : HTTP error code : " + responseCode);
         }
