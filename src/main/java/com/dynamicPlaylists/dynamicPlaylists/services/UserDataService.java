@@ -83,8 +83,8 @@ public class UserDataService {
         List<User> users = userRepository.findAll();
         for (User user : users) {
             try {
-                boolean isActive = spotifyDataService.checkIsActive(user);
-                user.setActive(isActive);
+                boolean isPlaying = spotifyDataService.setIsPlaying(user);
+                user.setPlaying(isPlaying);
                 userRepository.save(user);
             } catch (Exception e) {
                 System.err.println("Failed to check user activity for user: " + user.getId());

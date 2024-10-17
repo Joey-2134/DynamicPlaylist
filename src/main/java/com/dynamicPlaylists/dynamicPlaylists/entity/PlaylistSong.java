@@ -24,5 +24,4 @@ public class PlaylistSong {
     private Song song;
 
     private int tally = 0;
-    private long lastSkipTimestamp;
 }

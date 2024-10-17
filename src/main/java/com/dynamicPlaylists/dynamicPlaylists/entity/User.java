@@ -29,24 +29,21 @@ public class User {
     private long expiresIn; // The time period (in seconds) for which the access token is valid.
     private int skipThreshold;
     private int cooldownDays;
-    private boolean isActive;
+    private boolean isPlaying;
+
+    private String lastTrackId;
+    private int lastTrackLength;
+    private float lastTrackProgress;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) //each user can have multiple playlists
     private List<Playlist> playlists = new ArrayList<>();
-
-    public User(String id, String username, int skipThreshold, int cooldownDays) {
-        super();
-        this.id = id;
-        this.username = username;
-        this.skipThreshold = skipThreshold;
-        this.cooldownDays = cooldownDays;
-    }
 
     public User(String id, String username) {
         super();
         this.id = id;
         this.username = username;
+        this.lastTrackId = "2up3OPMp9Tb4dAKM2erWXQ";
     }
-
 
 }
