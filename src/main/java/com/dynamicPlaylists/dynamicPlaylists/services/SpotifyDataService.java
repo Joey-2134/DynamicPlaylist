@@ -84,7 +84,6 @@ public class SpotifyDataService {
         if (responseCode == HttpURLConnection.HTTP_OK) {
             JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
             //System.out.println("Songs: " + response.toString(2));
-
             for (int i = 0; i < response.getJSONArray("items").length(); i++) {
                 JSONObject song = response.getJSONArray("items").getJSONObject(i).getJSONObject("track");
                 playlistSongs.add(song);

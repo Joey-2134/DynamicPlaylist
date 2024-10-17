@@ -100,6 +100,9 @@ public class SpotifyAuthService {
         String userId = spotifyUserData.getString("id");
         String username = spotifyUserData.getString("display_name");
 
+        System.out.println("User ID: " + userId);
+        System.out.println("Access Token: " + accessToken);
+
         String encryptedAccessToken = AESUtil.encrypt(accessToken);
         String encryptedRefreshToken = AESUtil.encrypt(refreshToken);
 
