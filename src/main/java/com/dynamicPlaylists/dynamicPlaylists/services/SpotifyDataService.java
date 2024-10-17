@@ -1,7 +1,10 @@
 package com.dynamicPlaylists.dynamicPlaylists.services;
 
+import com.dynamicPlaylists.dynamicPlaylists.entity.User;
+import com.dynamicPlaylists.dynamicPlaylists.util.AESUtil;
 import com.dynamicPlaylists.dynamicPlaylists.util.DataUtil;
 import org.json.JSONObject;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -36,6 +39,36 @@ public class SpotifyDataService {
             //System.out.println("Raw Spotify Response: " + response.toString());
 
             return new JSONObject(response.toString());
+        } else {
+            throw new RuntimeException("Failed : HTTP error code : " + responseCode);
+        }
+    }
+
+    public boolean checkIsActive(User user) throws Exception {
+        URL url = new URL("https://api.spotify.com/v1/me/player");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Authorization", "Bearer " + AESUtil.decrypt(user.getAccessToken()));
+
+        int responseCode = con.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            JSONObject responseJSON = new JSONObject(response.toString());
+            //System.out.println("Playback Status Raw Spotify Response: " + response.toString());
+            System.out.println("User %s is active" + responseJSON.getJSONObject("device").getBoolean("is_active"));
+            return true;
+
+        } else if (responseCode == 204) {
+            System.out.printf("User %s has no active device", user.getId());
+            return false;
         } else {
             throw new RuntimeException("Failed : HTTP error code : " + responseCode);
         }
@@ -84,7 +117,6 @@ public class SpotifyDataService {
         if (responseCode == HttpURLConnection.HTTP_OK) {
             JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
             //System.out.println("Songs: " + response.toString(2));
-
             for (int i = 0; i < response.getJSONArray("items").length(); i++) {
                 JSONObject song = response.getJSONArray("items").getJSONObject(i).getJSONObject("track");
                 playlistSongs.add(song);

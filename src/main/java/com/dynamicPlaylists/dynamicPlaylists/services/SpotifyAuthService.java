@@ -32,7 +32,7 @@ public class SpotifyAuthService {
 
     public String getLoginUrl() {
         String redirectUri = "http://localhost:8080/callback";
-        String scope = "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private";
+        String scope = "user-read-private user-read-email user-read-playback-state playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private";
         String responseType = "code";
 
         return String.format(
@@ -99,6 +99,9 @@ public class SpotifyAuthService {
 
         String userId = spotifyUserData.getString("id");
         String username = spotifyUserData.getString("display_name");
+
+        System.out.println("User ID: " + userId);
+        System.out.println("Access Token: " + accessToken);
 
         String encryptedAccessToken = AESUtil.encrypt(accessToken);
         String encryptedRefreshToken = AESUtil.encrypt(refreshToken);

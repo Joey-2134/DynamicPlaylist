@@ -31,7 +31,6 @@ public class SpotifyDataController {
         try {
             User user = userDataService.findUserById(userId);
             String validAccessToken = spotifyUtil.getValidAccessToken(user);
-
             List<JSONObject> playlists = spotifyDataService.fetchSpotifyPlaylists(validAccessToken, userId);
             userDataService.saveUserPlaylists(userId, playlists, validAccessToken);
 

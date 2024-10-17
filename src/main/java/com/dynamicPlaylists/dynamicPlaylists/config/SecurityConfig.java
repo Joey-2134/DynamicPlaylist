@@ -22,11 +22,11 @@ public class SecurityConfig {
                 )
                 .requestCache((cache) -> cache
                         .requestCache(requestCache)
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/api/login-url")
-                        .defaultSuccessUrl("/callback", true)
                 );
+//                .oauth2Login(oauth2 -> oauth2
+//                        .loginPage("/api/login-url")
+//                        .defaultSuccessUrl("/callback", true)
+//                );
 
         return http.build();
     }
