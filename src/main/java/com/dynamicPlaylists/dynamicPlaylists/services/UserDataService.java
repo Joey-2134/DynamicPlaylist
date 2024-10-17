@@ -9,6 +9,7 @@ import com.dynamicPlaylists.dynamicPlaylists.repository.PlaylistSongRepository;
 import com.dynamicPlaylists.dynamicPlaylists.repository.SongRepository;
 import com.dynamicPlaylists.dynamicPlaylists.repository.UserRepository;
 import org.json.JSONObject;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.List;
@@ -73,6 +74,21 @@ public class UserDataService {
                      playlistSongRepository.save(playlistSong);
                 }
                 offset += limit;
+            }
+        }
+    }
+
+    @Scheduled(fixedDelay = 30000)
+    public void checkAndUpdateUsersActivityStatus() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            try {
+                boolean isActive = spotifyDataService.checkIsActive(user);
+                user.setActive(isActive);
+                userRepository.save(user);
+            } catch (Exception e) {
+                System.err.println("Failed to check user activity for user: " + user.getId());
+                e.printStackTrace();
             }
         }
     }
