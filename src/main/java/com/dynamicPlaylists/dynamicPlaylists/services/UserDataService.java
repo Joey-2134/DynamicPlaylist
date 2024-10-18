@@ -68,10 +68,10 @@ public class UserDataService {
 
                     songRepository.save(song);
 
-                     PlaylistSong playlistSong = new PlaylistSong();
-                     playlistSong.setPlaylist(playlist);
-                     playlistSong.setSong(song);
-                     playlistSongRepository.save(playlistSong);
+                    PlaylistSong playlistSong = new PlaylistSong();
+                    playlistSong.setPlaylist(playlist);
+                    playlistSong.setSong(song);
+                    playlistSongRepository.save(playlistSong);
                 }
                 offset += limit;
             }
@@ -93,4 +93,20 @@ public class UserDataService {
         }
     }
 
+    @Scheduled(fixedDelay = 30000)
+    public void checkAndMoveSongToTempPlaylist() {
+        System.out.println("Checking and moving songs to temp playlist");
+        for (PlaylistSong playlistSong : playlistSongRepository.findAll()) {
+
+            if (playlistSong.getTally() >= playlistSong.getPlaylist().getUser().getSkipThreshold()) {
+                System.out.println("Song tally reached for song: " + playlistSong.getSong().getName());
+                Playlist tempPlaylist = playlistRepository.findByName(playlistSong.getPlaylist().getName() + " Temp");
+                spotifyDataService.addTrackToPlaylist(playlistSong.getSong().getId(), tempPlaylist.getId(), playlistSong.getPlaylist().getUser()); // Add song to temp playlist
+                spotifyDataService.removeTrackFromPlaylist(playlistSong.getSong().getId(), playlistSong.getPlaylist().getId(), playlistSong.getPlaylist().getUser()); // Remove song from original playlist
+                System.out.println("Song moved to temp playlist: " + playlistSong.getSong().getName());
+                playlistSongRepository.delete(playlistSong);
+            }
+
+        }
+    }
 }

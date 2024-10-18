@@ -1,6 +1,8 @@
 package com.dynamicPlaylists.dynamicPlaylists.services;
 
+import com.dynamicPlaylists.dynamicPlaylists.entity.Playlist;
 import com.dynamicPlaylists.dynamicPlaylists.entity.User;
+import com.dynamicPlaylists.dynamicPlaylists.repository.PlaylistRepository;
 import com.dynamicPlaylists.dynamicPlaylists.util.AESUtil;
 import com.dynamicPlaylists.dynamicPlaylists.util.DataUtil;
 import org.json.JSONObject;
@@ -8,13 +10,21 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class SpotifyDataService {
+
+    private final PlaylistRepository playlistRepository;
+
+    public SpotifyDataService(PlaylistRepository playlistRepository) {
+        this.playlistRepository = playlistRepository;
+    }
 
     //fetch user info
     JSONObject fetchSpotifyUserInfo(String accessToken) throws IOException {
@@ -84,9 +94,6 @@ public class SpotifyDataService {
         int responseCode = con.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
             JSONObject response = new JSONObject(DataUtil.parseHTTPResponse(con));
-//            System.out.println("Playlists: " + response.toString(2));
-//            System.out.println("Type of playlists: " + response.getClass());
-
             for (int i = 0; i < response.getJSONArray("items").length(); i++) {
                 JSONObject playlist = response.getJSONArray("items").getJSONObject(i);
                 if (playlist.getJSONObject("owner").getString("id").equals(userId)) {
@@ -142,4 +149,121 @@ public class SpotifyDataService {
             throw new RuntimeException("Failed to fetch track details: " + e.getMessage());
         }
     }
+
+    public void addTrackToPlaylist(String songToAddId, String playlistToAddToId, User user) {
+        try {
+            URL url = new URL("https://api.spotify.com/v1/playlists/" + playlistToAddToId + "/tracks");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + AESUtil.decrypt(user.getAccessToken()));
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            String body = String.format("{\"uris\":[\"spotify:track:%s\"]}", songToAddId);
+            int byteLength = body.getBytes().length;
+            con.setRequestProperty("Content-Length", String.valueOf(byteLength));
+
+            // Write the body to the output stream
+            con.getOutputStream().write(body.getBytes());
+
+            if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+                System.out.println("Track added to playlist successfully");
+            } else {
+                throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
+            }
+
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to add track to playlist: " + e.getMessage());
+    }
+}
+
+    public void removeTrackFromPlaylist(String songToRemoveId, String playlistToRemoveFromId, User user) {
+        try {
+            URL url = new URL("https://api.spotify.com/v1/playlists/" + playlistToRemoveFromId + "/tracks");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("DELETE");
+            con.setRequestProperty("Authorization", "Bearer " + AESUtil.decrypt(user.getAccessToken()));
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            String body = String.format("{\"tracks\":[{\"uri\":\"spotify:track:%s\"}]}", songToRemoveId);
+            int byteLength = body.getBytes().length;
+            con.setRequestProperty("Content-Length", String.valueOf(byteLength));
+
+            // Write the body to the output stream
+            con.getOutputStream().write(body.getBytes());
+
+            if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                System.out.println("Track removed from playlist successfully");
+            } else {
+                throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove track from playlist: " + e.getMessage());
+        }
+    }
+
+    public void createTempPlaylists(User user, List<JSONObject> playlists) throws Exception {
+        for (JSONObject playlistJson : playlists) {
+            if (playlistJson.getString("name").contains("Temp")) {
+                continue; // Skip if it's already a Temp playlist
+            }
+
+            // URL to create a new playlist on Spotify
+            URL url = new URL("https://api.spotify.com/v1/users/" + user.getId() + "/playlists");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + AESUtil.decrypt(user.getAccessToken()));
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            String body = String.format("{\"name\":\"%s\",\"public\":false}", playlistJson.getString("name") + " Temp");
+            int byteLength = body.getBytes(StandardCharsets.UTF_8).length;
+            con.setRequestProperty("Content-Length", String.valueOf(byteLength));
+
+            // Write the body to the output stream
+            OutputStream os = con.getOutputStream();
+            byte[] input = body.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+            os.flush();
+            os.close();
+
+            // Capture the response from Spotify
+            StringBuilder response = new StringBuilder();
+            if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
+                    String responseLine;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                }
+
+                // Parse the response JSON to extract the new playlist ID
+                JSONObject responseObject = new JSONObject(response.toString());
+                String newPlaylistId = responseObject.getString("id"); // Get the new playlist ID from the response
+
+                System.out.println("Temp playlist created successfully with ID: " + newPlaylistId);
+
+                // Save the new temp playlist to your database
+                Playlist tempPlaylist = new Playlist();
+                tempPlaylist.setId(newPlaylistId); // Use the ID from the response
+                tempPlaylist.setName(playlistJson.getString("name") + " Temp");
+                tempPlaylist.setUser(user);
+
+                playlistRepository.save(tempPlaylist);
+
+                Playlist tempPlaylistPrint = playlistRepository.findByName(playlistJson.getString("name") + " Temp");
+                if (tempPlaylistPrint != null) {
+                    System.out.println("Temp Playlist Saved To DB: " + tempPlaylistPrint.getName());
+                } else {
+                    System.out.println("Temp Playlist was not saved to DB.");
+                }
+
+            } else {
+                throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
+            }
+        }
+    }
+
 }

@@ -43,6 +43,7 @@ public class User {
         super();
         this.id = id;
         this.username = username;
+        this.skipThreshold = 2;
         this.lastTrackId = "2up3OPMp9Tb4dAKM2erWXQ";
     }
 
