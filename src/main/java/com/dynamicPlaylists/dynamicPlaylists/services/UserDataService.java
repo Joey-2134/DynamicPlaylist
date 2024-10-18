@@ -95,7 +95,7 @@ public class UserDataService {
 
     @Scheduled(fixedDelay = 30000)
     public void checkAndMoveSongToTempPlaylist() {
-        System.out.println("Checking and moving songs to temp playlist");
+        //System.out.println("Checking and moving songs to temp playlist");
         for (PlaylistSong playlistSong : playlistSongRepository.findAll()) {
 
             if (playlistSong.getTally() >= playlistSong.getPlaylist().getUser().getSkipThreshold()) {

@@ -46,22 +46,31 @@ public class SpotifyPlaybackService {
         List<User> users = userRepository.findAllByIsPlaying(true);
         for (User user : users) {
             try {
-                JSONObject trackDetails = spotifyDataService.fetchSpotifyTrackDetails(user);
 
-                if (!user.getLastTrackId().equals(trackDetails.getJSONObject("item").getString("id"))) {
-                    float progress = user.getLastTrackProgress() / user.getLastTrackLength();
-                    if (progress < skipThreshold) {
+                JSONObject trackDetails = spotifyDataService.fetchSpotifyTrackDetails(user); //get currently playing song details
+                if (!user.getLastTrackId().equals(trackDetails.getJSONObject("item").getString("id"))) { //if the song has changed
+                    float progress = user.getLastTrackProgress() / user.getLastTrackLength(); //calculate progress
+                    Optional<PlaylistSong> playlistSong = playlistSongRepository.findBySongIdAndPlaylistId(user.getLastTrackId(), getCurrentPlaylistId(trackDetails)); //get the playlist song
+                    if (progress < skipThreshold) { //if the song was skipped
                         //update tally
-                        Optional<PlaylistSong> playlistSong = playlistSongRepository.findBySongIdAndPlaylistId(user.getLastTrackId(), getCurrentPlaylistId(trackDetails));
                         if (playlistSong.isPresent()) {
                             playlistSong.get().setTally(playlistSong.get().getTally() + 1);
-                            System.out.println("Song Skipped: " + playlistSong.get().getSong().getName());
-                            System.out.println("Song ID: " + playlistSong.get().getSong().getId());
+                            System.out.println("Song Skipped: " + playlistSong.get().getSong().getName() + " In Playlist: " + playlistSong.get().getPlaylist().getName());
+                            System.out.println("Tally Incremented: " + playlistSong.get().getTally());
+                            playlistSongRepository.save(playlistSong.get());
+                        }
+                    } else {
+                        //update tally
+                        if (playlistSong.isPresent()) {
+                            playlistSong.get().setTally(playlistSong.get().getTally() - 1);
+                            System.out.println("Song Not Skipped: " + playlistSong.get().getSong().getName() + " In Playlist: " + playlistSong.get().getPlaylist().getName());
+                            System.out.println("Tally Decremented: " + playlistSong.get().getTally());
                             playlistSongRepository.save(playlistSong.get());
                         }
                     }
                 }
                 updateUserTrackDetails(user);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByIsPlaying(boolean b);
+    User findUserById(String userId);
+
+    User findUserByAccessToken(String encryptedAccessToken);
 }

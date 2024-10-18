@@ -42,6 +42,8 @@ public class SpotifyAuthService {
     }
 
     public String handleSpotifyCallback(String code) throws Exception {
+        String accessToken;
+        String encryptedAccessToken;
         HttpURLConnection con = prepareGetAccessTokenRequest(code);
 
         int responseCode = con.getResponseCode();
@@ -52,12 +54,14 @@ public class SpotifyAuthService {
                 while ((inputLine = in.readLine()) != null) {
                     response.append(inputLine);
                 }
+                accessToken = new JSONObject(response.toString()).getString("access_token");
+                encryptedAccessToken = AESUtil.encrypt(accessToken);
                 saveDataToUser(response.toString());
             }
         } else {
             throw new RuntimeException("Failed : HTTP error code : " + responseCode);
         }
-        return "Authentication successful!, you can now close this tab.";
+        return encryptedAccessToken;
     }
 
     private HttpURLConnection prepareGetAccessTokenRequest(String code) throws IOException {
